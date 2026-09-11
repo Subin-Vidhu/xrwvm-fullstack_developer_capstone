@@ -124,3 +124,22 @@ img{
     text-align:center;
     box-shadow: 2px 2px 3px #999;  
 }
+.contact-header {
+  background-color: #f4f4f4;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.contact-content {
+  padding: 40px 0;
+}
+
+.contact-list {
+  list-style: none;
+  padding: 0;
+  line-height: 2;
+}
+
+.contact-form label {
+  font-weight: 600;
+}
