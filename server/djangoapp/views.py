@@ -13,8 +13,9 @@ from django.contrib.auth import login, authenticate
 import logging
 import json
 from django.views.decorators.csrf import csrf_exempt
+from djangoapp.restapis import get_request
 # from .populate import initiate
-
+from .models import CarModel
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -80,17 +81,46 @@ def registration(request):
 
 # # Update the `get_dealerships` view to render the index page with
 # a list of dealerships
-# def get_dealerships(request):
-# ...
+def get_dealerships(request, state="All"):
+    if request.method == "GET":
+        endpoint = "/fetchDealers" if state == "All" else "/fetchDealers/" + state
+        dealerships = get_request(endpoint)
+        return JsonResponse({"status": 200, "dealers": dealerships})
 
 # Create a `get_dealer_reviews` view to render the reviews of a dealer
-# def get_dealer_reviews(request,dealer_id):
-# ...
-
+def get_dealer_reviews(request, dealer_id):
+    if request.method == "GET":
+        endpoint = "/fetchReviews/dealer/" + str(dealer_id)
+        reviews = get_request(endpoint)
+        return JsonResponse({"status": 200, "reviews": reviews})
 # Create a `get_dealer_details` view to render the dealer details
-# def get_dealer_details(request, dealer_id):
-# ...
+def get_dealer_details(request, dealer_id):
+    if request.method == "GET":
+        endpoint = "/fetchDealer/" + str(dealer_id)
+        dealership = get_request(endpoint)
+        return JsonResponse({"status": 200, "dealer": dealership})
 
 # Create a `add_review` view to submit a review
-# def add_review(request):
-# ...
+@csrf_exempt
+def add_review(request):
+    if request.user.is_anonymous:
+        return JsonResponse({"status": 403, "message": "Unauthorized"})
+
+    data = json.loads(request.body)
+    try:
+        from .restapis import post_review
+        response = post_review(data)
+        return JsonResponse({"status": 200})
+    except Exception:
+        return JsonResponse({"status": 401, "message": "Error in posting review"})
+
+def get_cars(request):
+    count = CarModel.objects.filter().count()
+    if count == 0:
+        from .populate import initiate
+        initiate()
+    car_models = CarModel.objects.select_related('car_make')
+    cars = []
+    for car_model in car_models:
+        cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
+    return JsonResponse({"CarModels": cars})
